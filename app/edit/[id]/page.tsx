@@ -1,6 +1,6 @@
 "use client"
 
-import type React from "react"
+import React from "react"
 
 import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
@@ -16,6 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { Usable } from "react"
 
 // 定义笔记类型
 type Note = {
@@ -81,9 +82,10 @@ const CustomButton = ({
   )
 }
 
-export default function EditPage({ params }: { params: { id: string } }) {
+export default function EditPage({ params }: { params: Usable<{ id: string }> }) {
   const router = useRouter()
-  const noteId = params.id
+  const unwrappedParams = React.use(params)
+  const noteId = unwrappedParams.id
 
   // 笔记数据
   const [notes, setNotes] = useState<Note[]>([])
@@ -161,6 +163,12 @@ export default function EditPage({ params }: { params: { id: string } }) {
   const autoSave = () => {
     if (!editingNote) return
 
+    // 从 localStorage 获取最新的笔记数据
+    const savedNotes = localStorage.getItem("notes")
+    if (!savedNotes) return
+
+    const currentNotes = JSON.parse(savedNotes)
+
     // 生成预览文本
     const preview = generatePreview(editingNote.content)
 
@@ -173,10 +181,14 @@ export default function EditPage({ params }: { params: { id: string } }) {
       lastUpdated: now,
     }
 
-    const updatedNotes = notes.map((note) => (note.id === updatedNote.id ? updatedNote : note))
+    // 更新笔记列表
+    const updatedNotes = currentNotes.map((note: Note) => 
+      note.id === updatedNote.id ? updatedNote : note
+    )
 
-    setNotes(updatedNotes)
+    // 保存到 localStorage 和状态
     localStorage.setItem("notes", JSON.stringify(updatedNotes))
+    setNotes(updatedNotes)
 
     setLastSaved(`自动保存于 ${new Date().toLocaleTimeString()}`)
 
@@ -198,10 +210,25 @@ export default function EditPage({ params }: { params: { id: string } }) {
 
   // 保存编辑后的笔记
   const saveNote = () => {
-    if (!editingNote) return
+    console.log('开始保存笔记...')
+    if (!editingNote) {
+      console.log('错误：editingNote 为空')
+      return
+    }
+
+    // 从 localStorage 获取最新的笔记数据
+    const savedNotes = localStorage.getItem("notes")
+    if (!savedNotes) {
+      console.log('错误：localStorage 中没有笔记数据')
+      return
+    }
+
+    console.log('从 localStorage 获取的笔记数据:', JSON.parse(savedNotes))
+    const currentNotes = JSON.parse(savedNotes)
 
     // 生成预览文本
     const preview = generatePreview(editingNote.content)
+    console.log('生成的预览文本:', preview)
 
     // 更新时间戳和最后更新时间
     const now = Date.now()
@@ -211,13 +238,20 @@ export default function EditPage({ params }: { params: { id: string } }) {
       timestamp: updateTimestamp(),
       lastUpdated: now,
     }
+    console.log('更新后的笔记数据:', updatedNote)
 
-    const updatedNotes = notes.map((note) => (note.id === updatedNote.id ? updatedNote : note))
+    // 更新笔记列表
+    const updatedNotes = currentNotes.map((note: Note) => 
+      note.id === updatedNote.id ? updatedNote : note
+    )
+    console.log('更新后的笔记列表:', updatedNotes)
 
-    setNotes(updatedNotes)
+    // 保存到 localStorage 和状态
     localStorage.setItem("notes", JSON.stringify(updatedNotes))
+    setNotes(updatedNotes)
+    console.log('笔记已保存到 localStorage 和状态')
 
-    // 更新标签系统 - 移除未使用的标签
+    // 更新标签系统
     updateTagSystem()
 
     // 显示成功提示
@@ -228,31 +262,50 @@ export default function EditPage({ params }: { params: { id: string } }) {
     })
 
     // 返回首页
+    console.log('保存完成，准备返回首页')
     router.push("/")
   }
 
   // 更新标签系统 - 检查并移除未使用的标签
   const updateTagSystem = () => {
-    if (!editingNote) return
+    console.log('开始更新标签系统...')
+    if (!editingNote) {
+      console.log('错误：editingNote 为空')
+      return
+    }
+
+    // 从 localStorage 获取最新的笔记数据
+    const savedNotes = localStorage.getItem("notes")
+    if (!savedNotes) {
+      console.log('错误：localStorage 中没有笔记数据')
+      return
+    }
+
+    const currentNotes = JSON.parse(savedNotes)
+    console.log('当前笔记列表:', currentNotes)
 
     // 获取所有笔记中使用的标签
     const usedTags = new Set<string>()
 
     // 添加当前编辑笔记的标签
     editingNote.tags.forEach((tag) => usedTags.add(tag))
+    console.log('当前编辑笔记的标签:', editingNote.tags)
 
     // 添加其他笔记的标签
-    notes.forEach((note) => {
+    currentNotes.forEach((note: Note) => {
       if (note.id !== editingNote.id) {
         note.tags.forEach((tag) => usedTags.add(tag))
       }
     })
+    console.log('所有使用的标签:', Array.from(usedTags))
 
     // 过滤掉未使用的标签
     const updatedTags = availableTags.filter((tag) => usedTags.has(tag.name))
+    console.log('更新后的标签列表:', updatedTags)
 
     setAvailableTags(updatedTags)
     localStorage.setItem("tags", JSON.stringify(updatedTags))
+    console.log('标签系统更新完成')
   }
 
   // 更新编辑中的笔记标题
@@ -324,17 +377,33 @@ export default function EditPage({ params }: { params: { id: string } }) {
 
   // 确认删除笔记
   const confirmDeleteNote = () => {
-    const updatedNotes = notes.filter((note) => note.id !== noteId)
+    console.log('开始删除笔记...')
+    // 从 localStorage 获取最新的笔记数据
+    const savedNotes = localStorage.getItem("notes")
+    if (!savedNotes) {
+      console.log('错误：localStorage 中没有笔记数据')
+      return
+    }
+
+    console.log('从 localStorage 获取的笔记数据:', JSON.parse(savedNotes))
+    const currentNotes = JSON.parse(savedNotes)
+    const updatedNotes = currentNotes.filter((note: Note) => note.id !== noteId)
+    console.log('过滤后的笔记列表:', updatedNotes)
+    
+    // 更新状态和 localStorage
     setNotes(updatedNotes)
     localStorage.setItem("notes", JSON.stringify(updatedNotes))
+    console.log('笔记已从 localStorage 和状态中删除')
 
     setDialogOpen(false)
 
     // 更新标签系统
-    const deletedNote = notes.find((note) => note.id === noteId)
+    const deletedNote = currentNotes.find((note: Note) => note.id === noteId)
     if (deletedNote) {
-      const remainingNotes = notes.filter((note) => note.id !== noteId)
-      updateTagsAfterNoteDeletion(deletedNote, remainingNotes)
+      console.log('找到要删除的笔记:', deletedNote)
+      updateTagsAfterNoteDeletion(deletedNote, updatedNotes)
+    } else {
+      console.log('未找到要删除的笔记')
     }
 
     // 显示成功提示
@@ -345,22 +414,28 @@ export default function EditPage({ params }: { params: { id: string } }) {
     })
 
     // 返回首页
+    console.log('删除完成，准备返回首页')
     router.push("/")
   }
 
   // 在删除笔记后更新标签
   const updateTagsAfterNoteDeletion = (deletedNote: Note, remainingNotes: Note[]) => {
+    console.log('开始更新标签系统...')
     // 获取所有剩余笔记中使用的标签
     const usedTags = new Set<string>()
 
     remainingNotes.forEach((note) => {
       note.tags.forEach((tag) => usedTags.add(tag))
     })
+    console.log('使用的标签:', Array.from(usedTags))
 
     // 过滤掉未使用的标签
     const updatedTags = availableTags.filter((tag) => usedTags.has(tag.name))
+    console.log('更新后的标签列表:', updatedTags)
+    
     setAvailableTags(updatedTags)
     localStorage.setItem("tags", JSON.stringify(updatedTags))
+    console.log('标签系统更新完成')
   }
 
   if (!editingNote) {

@@ -188,22 +188,57 @@ export default function HomePage() {
 
   // 从localStorage加载数据
   useEffect(() => {
-    const savedNotes = localStorage.getItem("notes")
-    const savedTags = localStorage.getItem("tags")
-    const savedNotebooks = localStorage.getItem("notebooks")
+    const loadData = () => {
+      console.log('首页开始加载数据...')
+      const savedNotes = localStorage.getItem("notes")
+      const savedTags = localStorage.getItem("tags")
+      const savedNotebooks = localStorage.getItem("notebooks")
 
-    if (savedNotes) {
-      setNotes(JSON.parse(savedNotes))
+      if (savedNotes) {
+        const parsedNotes = JSON.parse(savedNotes)
+        console.log('从 localStorage 加载的笔记数据:', parsedNotes)
+        // 只在数据确实发生变化时更新状态
+        if (JSON.stringify(notes) !== JSON.stringify(parsedNotes)) {
+          setNotes(parsedNotes)
+        }
+      }
+
+      if (savedTags) {
+        const parsedTags = JSON.parse(savedTags)
+        console.log('从 localStorage 加载的标签数据:', parsedTags)
+        // 只在数据确实发生变化时更新状态
+        if (JSON.stringify(availableTags) !== JSON.stringify(parsedTags)) {
+          setAvailableTags(parsedTags)
+        }
+      }
+
+      if (savedNotebooks) {
+        const parsedNotebooks = JSON.parse(savedNotebooks)
+        console.log('从 localStorage 加载的笔记本数据:', parsedNotebooks)
+        // 只在数据确实发生变化时更新状态
+        if (JSON.stringify(notebooks) !== JSON.stringify(parsedNotebooks)) {
+          setNotebooks(parsedNotebooks)
+        }
+      }
     }
 
-    if (savedTags) {
-      setAvailableTags(JSON.parse(savedTags))
+    // 初始加载
+    loadData()
+
+    // 监听路由变化
+    const handleRouteChange = () => {
+      console.log('路由变化，重新加载数据...')
+      loadData()
     }
 
-    if (savedNotebooks) {
-      setNotebooks(JSON.parse(savedNotebooks))
+    // 添加路由变化监听
+    window.addEventListener('popstate', handleRouteChange)
+
+    // 清理函数
+    return () => {
+      window.removeEventListener('popstate', handleRouteChange)
     }
-  }, [])
+  }, []) // 移除依赖项，使用事件监听
 
   // 保存数据到localStorage
   useEffect(() => {
