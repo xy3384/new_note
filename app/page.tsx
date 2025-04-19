@@ -111,71 +111,13 @@ export default function HomePage() {
   const router = useRouter()
 
   // 所有可用标签
-  const [availableTags, setAvailableTags] = useState<Tag[]>([
-    { id: "1", name: "外贸" },
-    { id: "2", name: "人工智能" },
-    { id: "3", name: "出海" },
-    { id: "4", name: "AI技术" },
-    { id: "5", name: "企业动态" },
-  ])
+  const [availableTags, setAvailableTags] = useState<Tag[]>([])
 
   // 笔记本数据
-  const [notebooks, setNotebooks] = useState<Notebook[]>([
-    { id: "default", name: "默认笔记本" },
-    { id: "work", name: "工作" },
-    { id: "personal", name: "个人" },
-  ])
+  const [notebooks, setNotebooks] = useState<Notebook[]>([])
 
   // 笔记数据
-  const [notes, setNotes] = useState<Note[]>([
-    {
-      id: "1111",
-      title: "1111",
-      content:
-        '本文介绍了多家企业的出海动态，如字节跳动和阿里国际加大在人工智能领域的投入、SHEIN在粤港澳智慧产业园的进展，以及多家企业关于海外市场拓展的具体举措。同时，文章还报道了政府机构在国际贸易和科技领域的政策调整，如中国对美国加征关税的税率上调，欧盟关于AI超级工厂的计划等。\n\n...\n\n访问36氪出海网站 letschuhai.com，获取更多全球商业相关资讯。\n\n## 头条大事\n活动 | 中东出海快车道：阿联酋Ajman自由区深圳交流会火热招募中\n\n4月27日，"中东出海快车道：阿联酋 Ajman 自由区深圳交流会"将在深圳举办。本次交流会将搭建一个高效、精准的交流平台，汇聚中阿政商代表、行业专家和众多出海企业，深入解析中东市场的发展潜力，全方位展示 Ajman 自由区作为企业出海战略据点的独特优势，为中国企业本土落地提供满满指引。如果您对中东市场感兴趣，欢迎您扫描下方二维码或点击"此处"填写表单，报名参加本次活动。活动报名将于2025年4月26日中午12:00截止。\n\n## 公司动态\n字节跳动2024年利润增速和利润率下滑，海外收入占比达历史最高\n\n据报道，字节跳动2023年净利润332亿美元，同比增幅仅6%，较2022年大幅下滑。如果人工造雾，字节跳动或将面临投资者的质疑。',
-      preview: "本文介绍了多家企业的出海动态，如字节跳动和阿里国际加大在...",
-      tags: ["外贸", "人工智能", "出海", "AI技术", "企业动态"],
-      notebookId: "work",
-      timestamp: "about 17 hours ago",
-      lastUpdated: Date.now() - 17 * 60 * 60 * 1000,
-    },
-    {
-      id: "untitled",
-      title: "未命名笔记",
-      content: "",
-      tags: [],
-      notebookId: "default",
-      timestamp: "about 18 hours ago",
-      lastUpdated: Date.now() - 18 * 60 * 60 * 1000,
-    },
-    {
-      id: "111",
-      title: "未111",
-      content: "dddd2222",
-      tags: ["11111"],
-      notebookId: "personal",
-      timestamp: "about 18 hours ago",
-      lastUpdated: Date.now() - 18 * 60 * 60 * 1000,
-    },
-    {
-      id: "2222",
-      title: "2222",
-      content: "ddd哈哈哈哈",
-      tags: ["1111"],
-      notebookId: "work",
-      timestamp: "about 18 hours ago",
-      lastUpdated: Date.now() - 18 * 60 * 60 * 1000,
-    },
-    {
-      id: "AAA",
-      title: "AAA",
-      content: "111111",
-      tags: [],
-      notebookId: "personal",
-      timestamp: "about 19 hours ago",
-      lastUpdated: Date.now() - 19 * 60 * 60 * 1000,
-    },
-  ])
+  const [notes, setNotes] = useState<Note[]>([])
 
   const [expandedSections, setExpandedSections] = useState({
     notebooks: true,
@@ -201,6 +143,13 @@ export default function HomePage() {
         if (JSON.stringify(notes) !== JSON.stringify(parsedNotes)) {
           setNotes(parsedNotes)
         }
+      } else {
+        // 如果没有保存的笔记，创建一个默认笔记本和空笔记列表
+        const defaultNotebook = { id: "default", name: "默认笔记本" }
+        setNotebooks([defaultNotebook])
+        localStorage.setItem("notebooks", JSON.stringify([defaultNotebook]))
+        setNotes([])
+        localStorage.setItem("notes", JSON.stringify([]))
       }
 
       if (savedTags) {
@@ -210,6 +159,9 @@ export default function HomePage() {
         if (JSON.stringify(availableTags) !== JSON.stringify(parsedTags)) {
           setAvailableTags(parsedTags)
         }
+      } else {
+        setAvailableTags([])
+        localStorage.setItem("tags", JSON.stringify([]))
       }
 
       if (savedNotebooks) {
@@ -219,6 +171,10 @@ export default function HomePage() {
         if (JSON.stringify(notebooks) !== JSON.stringify(parsedNotebooks)) {
           setNotebooks(parsedNotebooks)
         }
+      } else {
+        const defaultNotebook = { id: "default", name: "默认笔记本" }
+        setNotebooks([defaultNotebook])
+        localStorage.setItem("notebooks", JSON.stringify([defaultNotebook]))
       }
     }
 
